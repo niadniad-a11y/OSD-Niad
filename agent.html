@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#ef4444">
+<meta name="description" content="OSD Agent Earning Calculator">
+<title>OSD Agent Earning Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{box-sizing:border-box} body{font-family:'Noto Sans Bengali',sans-serif;background:#f5f7fb;color:#172033}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+.card{background:#fff;border:1px solid #e7eaf0;border-radius:18px;box-shadow:0 6px 22px rgba(15,23,42,.05)}
+.btn{transition:.18s}.btn:active{transform:scale(.98)}
+.bottom-nav{padding-bottom:max(10px,env(safe-area-inset-bottom))}
+.hide{display:none!important}
+input,select{outline:none}
+</style>
+</head>
+<body class="min-h-screen pb-24 md:pb-8">
+
+<!-- HEADER -->
+<header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-2xl bg-red-500 text-white flex items-center justify-center shadow-lg shadow-red-500/20"><i data-lucide="truck"></i></div>
+      <div><h1 class="font-extrabold text-lg leading-tight">OSD Agent Earning</h1><p class="text-[11px] text-slate-500">Delivery • Commission • Performance</p></div>
+    </div>
+    <button onclick="openProfile()" class="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden" id="headerAvatar"><i data-lucide="user"></i></button>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 py-5 space-y-5">
+
+<!-- MONTH BANNER -->
+<section class="card p-4 bg-gradient-to-r from-red-50 to-white border-red-100">
+  <div class="flex items-center justify-between gap-3">
+    <div>
+      <p class="text-xs text-red-500 font-bold">বর্তমান মাস</p>
+      <h2 id="monthTitle" class="text-xl font-extrabold mt-1">—</h2>
+    </div>
+    <button onclick="showOldMonths()" class="btn bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1.5"><i data-lucide="archive" class="w-4"></i> পুরোনো মাস</button>
+  </div>
+  <p class="text-[11px] text-slate-500 mt-2">নতুন মাস শুরু হলে আগের মাসের হিসাব স্বয়ংক্রিয়ভাবে আলাদা আর্কাইভে থাকবে।</p>
+</section>
+
+<!-- DASHBOARD -->
+<section id="pageHome" class="space-y-5">
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="card p-4"><p class="text-[11px] text-slate-500 font-bold">আজকের পার্সেল</p><p id="todayParcel" class="text-2xl font-extrabold mt-1">0</p><p id="todayRate" class="text-xs text-red-500 font-bold mt-1">রেট 0</p></div>
+    <div class="card p-4"><p class="text-[11px] text-slate-500 font-bold">আজকের কমিশন</p><p id="todayEarn" class="text-2xl font-extrabold text-red-500 mt-1">৳0</p></div>
+    <div class="card p-4"><p class="text-[11px] text-slate-500 font-bold">মাসিক পার্সেল</p><p id="monthParcel" class="text-2xl font-extrabold mt-1">0</p></div>
+    <div class="card p-4 bg-slate-900 text-white border-slate-900"><p class="text-[11px] text-slate-300 font-bold">মোট আয়</p><p id="monthTotal" class="text-2xl font-extrabold text-white mt-1">৳3,000</p><p class="text-[10px] text-slate-400 mt-1">বেস + কমিশন</p></div>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-5">
+    <section class="card p-5 lg:col-span-2">
+      <div class="flex items-center justify-between mb-4">
+        <div><h2 class="font-extrabold text-lg">আজকের ডেলিভারি</h2><p class="text-xs text-slate-500">তারিখ ও পার্সেল সংখ্যা দিন</p></div>
+        <span id="typeBadge" class="text-[10px] px-2.5 py-1 rounded-full bg-red-50 text-red-600 font-extrabold">INSIDE</span>
+      </div>
+      <form onsubmit="saveEntry(event)" class="space-y-4">
+        <input type="date" id="entryDate" class="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50">
+        <input type="number" id="parcelInput" min="1" placeholder="আজ কতটি পার্সেল ডেলিভারি করেছেন?" class="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50" oninput="preview()">
+        <div class="grid grid-cols-3 gap-2 bg-slate-50 rounded-2xl p-3 text-center border border-slate-100">
+          <div><p class="text-[10px] text-slate-500">প্রতি পার্সেল</p><b id="pRate">৳0</b></div>
+          <div><p class="text-[10px] text-slate-500">আজকের আয়</p><b id="pEarn" class="text-red-500">৳0</b></div>
+          <div><p class="text-[10px] text-slate-500">স্ল্যাব</p><b id="pSlab">—</b></div>
+        </div>
+        <button class="btn w-full bg-red-500 hover:bg-red-600 text-white font-extrabold rounded-xl py-3.5 flex justify-center gap-2"><i data-lucide="save" class="w-4"></i><span id="saveText">হিসাব সেভ করুন</span></button>
+      </form>
+      <div id="nextSlab" class="mt-3 text-xs text-center text-slate-500"></div>
+    </section>
+
+    <section class="card p-5">
+      <h2 class="font-extrabold text-lg">কমিশন রেট</h2>
+      <p id="rateType" class="text-xs text-slate-500 mt-1">OSD Inside Agent</p>
+      <div id="tierList" class="mt-4 space-y-2"></div>
+    </section>
+  </div>
+
+  <section class="card p-5">
+    <div class="flex items-center justify-between mb-4"><div><h2 class="font-extrabold text-lg">এই মাসের হিসাব</h2><p class="text-xs text-slate-500">সর্বশেষ দিন আগে দেখানো হচ্ছে</p></div><button onclick="exportCSV()" class="text-xs font-bold border rounded-lg px-3 py-2 flex gap-1"><i data-lucide="download" class="w-4"></i> CSV</button></div>
+    <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b text-slate-500 text-xs"><th class="text-left p-2">তারিখ</th><th class="text-center p-2">পার্সেল</th><th class="text-center p-2">রেট</th><th class="text-right p-2">কমিশন</th><th class="text-right p-2">অ্যাকশন</th></tr></thead><tbody id="history"></tbody></table></div>
+    <div id="empty" class="hidden text-center py-10 text-slate-400 text-sm">এই মাসে এখনো কোনো হিসাব নেই।</div>
+  </section>
+</section>
+
+<!-- PERFORMANCE -->
+<section id="pagePerformance" class="hide space-y-5">
+  <section class="card p-5"><h2 class="font-extrabold text-xl">পারফরম্যান্স</h2><p class="text-xs text-slate-500 mt-1">এই মাসের কাজের সারাংশ</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
+      <div class="bg-slate-50 rounded-2xl p-4"><small>কাজের দিন</small><b id="workDays" class="block text-2xl mt-1">0</b></div>
+      <div class="bg-slate-50 rounded-2xl p-4"><small>গড় ডেলিভারি</small><b id="avgParcel" class="block text-2xl mt-1">0</b></div>
+      <div class="bg-slate-50 rounded-2xl p-4"><small>সেরা দিন</small><b id="bestDay" class="block text-2xl mt-1">0</b></div>
+      <div class="bg-slate-50 rounded-2xl p-4"><small>গড় দৈনিক আয়</small><b id="avgEarn" class="block text-2xl mt-1">৳0</b></div>
+    </div>
+  </section>
+  <section class="card p-5"><h3 class="font-bold mb-4">ডেলিভারি ট্রেন্ড</h3><div class="h-64"><canvas id="chart"></canvas></div></section>
+</section>
+
+<!-- LEADERBOARD -->
+<section id="pageLeaderboard" class="hide space-y-5">
+  <section class="card p-5">
+    <div class="flex items-center justify-between"><div><h2 class="font-extrabold text-xl">🏆 লিডারবোর্ড</h2><p class="text-xs text-slate-500">এই ডিভাইসে সংরক্ষিত এজেন্টদের মধ্যে র‍্যাংক</p></div><select id="boardMonth" onchange="renderBoard()" class="border rounded-lg px-2 py-2 text-xs"></select></div>
+    <div id="leaderboard" class="mt-4 space-y-2"></div>
+    <p class="text-[11px] text-slate-400 mt-4">অনলাইন/সব হাবের শেয়ার্ড লিডারবোর্ড চালু করতে পরে Supabase সংযোগ করতে হবে।</p>
+  </section>
+</section>
+
+<!-- PROFILE -->
+<section id="pageProfile" class="hide space-y-5">
+ <section class="card p-5">
+  <div class="flex items-center gap-4"><div id="profilePhoto" class="w-20 h-20 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-2xl font-extrabold overflow-hidden"></div><div><h2 id="profileName" class="font-extrabold text-xl">Agent</h2><p id="profileMeta" class="text-xs text-slate-500"></p></div></div>
+  <button onclick="openProfile()" class="w-full mt-5 border rounded-xl py-3 font-bold">প্রোফাইল সম্পাদনা</button>
+  <button onclick="resetCurrentMonth()" class="w-full mt-2 border border-red-200 text-red-600 rounded-xl py-3 font-bold">বর্তমান মাসের হিসাব মুছে শুরু করুন</button>
+ </section>
+</section>
+
+<!-- OLD MONTHS MODAL -->
+<div id="oldModal" class="hide fixed inset-0 z-50 bg-slate-950/50 p-4 flex items-center justify-center">
+ <div class="bg-white rounded-3xl p-5 w-full max-w-md max-h-[80vh] overflow-auto">
+  <div class="flex justify-between items-center"><h3 class="font-extrabold text-lg">পুরোনো মাস</h3><button onclick="closeOld()" class="p-2"><i data-lucide="x"></i></button></div>
+  <div id="oldMonths" class="mt-4 space-y-2"></div>
+ </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div id="profileModal" class="hide fixed inset-0 z-50 bg-slate-950/60 p-4 flex items-center justify-center">
+ <div class="bg-white rounded-3xl p-5 w-full max-w-md">
+  <div class="flex justify-between items-center mb-4"><h3 class="font-extrabold text-lg">প্রোফাইল</h3><button onclick="closeProfile()" class="p-2"><i data-lucide="x"></i></button></div>
+  <form onsubmit="saveProfile(event)" class="space-y-3">
+   <input id="nameInput" required placeholder="এজেন্টের নাম" class="w-full border rounded-xl px-4 py-3">
+   <select id="hubInput" class="w-full border rounded-xl px-4 py-3"><option value="Kishoreganj">কিশোরগঞ্জ</option><option value="Karimganj">করিমগঞ্জ</option></select>
+   <select id="typeInput" class="w-full border rounded-xl px-4 py-3"><option value="INSIDE">OSD Inside Agent</option><option value="OUTSIDE">OSD Outside Agent</option></select>
+   <input id="phoneInput" placeholder="মোবাইল নম্বর (ঐচ্ছিক)" class="w-full border rounded-xl px-4 py-3">
+   <input id="grossInput" type="number" min="0" value="3000" class="w-full border rounded-xl px-4 py-3">
+   <label class="block text-xs font-bold text-slate-500">ছবি (ঐচ্ছিক)</label><input id="photoInput" type="file" accept="image/*" class="w-full text-sm">
+   <button class="w-full bg-red-500 text-white rounded-xl py-3.5 font-extrabold">সেভ করুন</button>
+  </form>
+ </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t md:hidden">
+ <div class="grid grid-cols-4 max-w-md mx-auto">
+  <button onclick="go('Home')" class="py-2.5 text-red-500"><i data-lucide="home" class="mx-auto w-5"></i><span class="text-[10px] font-bold">হোম</span></button>
+  <button onclick="go('Performance')" class="py-2.5 text-slate-500"><i data-lucide="bar-chart-3" class="mx-auto w-5"></i><span class="text-[10px] font-bold">পারফরম্যান্স</span></button>
+  <button onclick="go('Leaderboard')" class="py-2.5 text-slate-500"><i data-lucide="trophy" class="mx-auto w-5"></i><span class="text-[10px] font-bold">লিডারবোর্ড</span></button>
+  <button onclick="go('Profile')" class="py-2.5 text-slate-500"><i data-lucide="user" class="mx-auto w-5"></i><span class="text-[10px] font-bold">প্রোফাইল</span></button>
+ </div>
+</nav>
+
+<script>
+const TIERS={
+ INSIDE:[{max:24,rate:23,label:'0–24'},{max:29,rate:27,label:'25–29'},{max:39,rate:31,label:'30–39'},{max:49,rate:33,label:'40–49'},{max:Infinity,rate:35,label:'50+'}],
+ OUTSIDE:[{max:24,rate:30,label:'0–24'},{max:29,rate:33,label:'25–29'},{max:34,rate:35,label:'30–34'},{max:39,rate:36,label:'35–39'},{max:Infinity,rate:38,label:'40+'}]
+};
+const MONTHS=['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+let profile=JSON.parse(localStorage.getItem('osd_pro_profile')||'null')||{name:'',hub:'Kishoreganj',type:'INSIDE',phone:'',gross:3000,photo:''};
+let data=JSON.parse(localStorage.getItem('osd_pro_data')||'{}');
+let current=new Date().toISOString().slice(0,7), editingId=null, chart=null;
+
+function key(){return current}
+function getEntries(k=current){return Array.isArray(data[k])?data[k]:[]}
+function saveAll(){localStorage.setItem('osd_pro_data',JSON.stringify(data));localStorage.setItem('osd_pro_profile',JSON.stringify(profile))}
+function rateFor(n){return (TIERS[profile.type]||TIERS.INSIDE).find(t=>n<=t.max).rate}
+function tierFor(n){return (TIERS[profile.type]||TIERS.INSIDE).find(t=>n<=t.max)}
+function money(n){return '৳'+Number(n||0).toLocaleString('en-US')}
+function monthName(k){let [y,m]=k.split('-');return MONTHS[+m-1]+' '+y}
+function fmtDate(d){let [y,m,day]=d.split('-');return day+' '+MONTHS[+m-1].slice(0,3)}
+function init(){
+ document.getElementById('entryDate').value=new Date().toISOString().slice(0,10);
+ document.getElementById('boardMonth').innerHTML=Object.keys(data).sort().reverse().map(k=>`<option value="${k}">${monthName(k)}</option>`).join('');
+ if(!profile.name)openProfile();
+ render();lucide.createIcons();
+}
+function render(){
+ document.getElementById('monthTitle').textContent=monthName(current);
+ document.getElementById('typeBadge').textContent=profile.type==='INSIDE'?'INSIDE':'OUTSIDE';
+ document.getElementById('rateType').textContent=profile.type==='INSIDE'?'OSD Inside Agent':'OSD Outside Agent';
+ let es=getEntries(), today=new Date().toISOString().slice(0,10), te=es.find(e=>e.date===today);
+ let total=es.reduce((s,e)=>s+e.parcels,0), comm=es.reduce((s,e)=>s+e.earning,0);
+ document.getElementById('todayParcel').textContent=te?te.parcels:0;
+ document.getElementById('todayRate').textContent='রেট '+(te?money(te.rate):'৳0')+' / পার্সেল';
+ document.getElementById('todayEarn').textContent=money(te?te.earning:0);
+ document.getElementById('monthParcel').textContent=total.toLocaleString();
+ document.getElementById('monthTotal').textContent=money(profile.gross+comm);
+ document.getElementById('history').innerHTML=es.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(e=>`<tr class="border-b border-slate-100"><td class="p-2 font-semibold">${fmtDate(e.date)}</td><td class="p-2 text-center font-bold">${e.parcels}</td><td class="p-2 text-center text-red-500 font-bold">${money(e.rate)}</td><td class="p-2 text-right font-bold">${money(e.earning)}</td><td class="p-2 text-right whitespace-nowrap"><button onclick="editEntry('${e.id}')" class="text-slate-500 p-1">✎</button><button onclick="deleteEntry('${e.id}')" class="text-red-500 p-1">×</button></td></tr>`).join('');
+ document.getElementById('empty').classList.toggle('hidden',es.length>0);
+ document.getElementById('tierList').innerHTML=TIERS[profile.type].map(t=>`<div class="flex justify-between items-center bg-slate-50 rounded-xl px-3 py-2.5"><span class="text-xs font-bold">${t.label} পার্সেল</span><b class="text-sm text-red-500">${money(t.rate)}</b></div>`).join('');
+ renderPerformance();renderBoard();renderProfile();preview();lucide.createIcons();
+}
+function preview(){
+ let n=parseInt(document.getElementById('parcelInput').value)||0;
+ if(!n){pRate.textContent='৳0';pEarn.textContent='৳0';pSlab.textContent='—';nextSlab.textContent='';return}
+ let t=tierFor(n), r=t.rate;
+ pRate.textContent=money(r);pEarn.textContent=money(n*r);pSlab.textContent='৳'+r+' স্ল্যাব';
+ let tiers=TIERS[profile.type], idx=tiers.indexOf(t), next=tiers[idx+1];
+ nextSlab.textContent=next&&isFinite(next.max)?`আর ${next.max-n+1}টি পার্সেল দিলে পরের রেট ৳${next.rate} হবে।`:'আপনি সর্বোচ্চ স্ল্যাবে আছেন।';
+}
+function saveEntry(e){
+ e.preventDefault();let date=entryDate.value,n=parseInt(parcelInput.value)||0;if(!date||n<=0)return;
+ let k=date.slice(0,7); // records belong to their actual month
+ let arr=getEntries(k), r=rateFor(n), earning=n*r;
+ // One date = one record. Editing can move the record to another month.
+ if(editingId){
+   for(const mk of Object.keys(data)){data[mk]=(data[mk]||[]).filter(x=>x.id!==editingId)}
+   arr=getEntries(k);arr.push({id:editingId,date,parcels:n,rate:r,earning})
+ }else{
+   let existing=arr.find(x=>x.date===date);
+   if(existing){existing.parcels=n;existing.rate=r;existing.earning=earning}
+   else arr.push({id:Date.now().toString(),date,parcels:n,rate:r,earning})
+ }
+ data[k]=arr;current=k;editingId=null;saveAll();entryDate.value=new Date().toISOString().slice(0,10);parcelInput.value='';saveText.textContent='হিসাব সেভ করুন';render();
+}
+function editEntry(id){let e=getEntries().find(x=>x.id===id);if(!e)return;editingId=id;entryDate.value=e.date;parcelInput.value=e.parcels;saveText.textContent='হিসাব আপডেট করুন';preview();window.scrollTo({top:0,behavior:'smooth'})}
+function deleteEntry(id){if(!confirm('এই হিসাবটি মুছে ফেলবেন?'))return;data[current]=getEntries().filter(x=>x.id!==id);saveAll();render()}
+function resetCurrentMonth(){if(!confirm(monthName(current)+'-এর সব হিসাব মুছে ফেলবেন?'))return;delete data[current];saveAll();render()}
+function renderPerformance(){
+ let es=getEntries(), days=es.length,total=es.reduce((s,e)=>s+e.parcels,0),comm=es.reduce((s,e)=>s+e.earning,0);
+ workDays.textContent=days;avgParcel.textContent=days?Math.round(total/days):0;bestDay.textContent=days?Math.max(...es.map(e=>e.parcels)):0;avgEarn.textContent=money(days?Math.round(comm/days):0);
+ if(chart)chart.destroy();let sorted=es.slice().sort((a,b)=>a.date.localeCompare(b.date));chart=new Chart(document.getElementById('chart'),{type:'line',data:{labels:sorted.map(e=>e.date.slice(8)),datasets:[{data:sorted.map(e=>e.parcels),tension:.3,borderWidth:3,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+}
+function allAgentsLocal(){
+ // This is intentionally only local demo data; no fake production leaderboard is claimed.
+ return [{...profile,parcels:getEntries().reduce((s,e)=>s+e.parcels,0),comm:getEntries().reduce((s,e)=>s+e.earning,0),you:true}];
+}
+function renderBoard(){
+ let sel=document.getElementById('boardMonth');if(!sel)return;
+ let keys=Object.keys(data).sort().reverse();if(!keys.includes(current))keys.unshift(current);
+ sel.innerHTML=keys.map(k=>`<option value="${k}" ${k===current?'selected':''}>${monthName(k)}</option>`).join('');
+ let k=sel.value||current, es=getEntries(k), parcels=es.reduce((s,e)=>s+e.parcels,0),comm=es.reduce((s,e)=>s+e.earning,0);
+ document.getElementById('leaderboard').innerHTML=`<div class="flex items-center gap-3 p-4 rounded-2xl bg-red-50 border border-red-100"><div class="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center font-extrabold">${(profile.name||'A').charAt(0)}</div><div class="flex-1"><b>${profile.name||'আপনি'}</b><p class="text-[11px] text-slate-500">${profile.hub} • ${profile.type==='INSIDE'?'Inside':'Outside'}</p></div><div class="text-right"><b>${parcels}</b><p class="text-[10px] text-slate-500">পার্সেল</p></div></div>`;
+}
+function renderProfile(){
+ profileName.textContent=profile.name||'Agent';profileMeta.textContent=`${profile.hub} • ${profile.type==='INSIDE'?'OSD Inside':'OSD Outside'} • বেস ${money(profile.gross)}`;
+ let els=[headerAvatar,profilePhoto];els.forEach(x=>x.innerHTML=profile.photo?`<img src="${profile.photo}" class="w-full h-full object-cover">`:(profile.name||'A').charAt(0).toUpperCase());
+}
+function openProfile(){nameInput.value=profile.name;hubInput.value=profile.hub;typeInput.value=profile.type;phoneInput.value=profile.phone;grossInput.value=profile.gross;document.getElementById('profileModal').classList.remove('hide')}
+function closeProfile(){document.getElementById('profileModal').classList.add('hide')}
+function saveProfile(e){e.preventDefault();profile.name=nameInput.value.trim();profile.hub=hubInput.value;profile.type=typeInput.value;profile.phone=phoneInput.value.trim();profile.gross=Number(grossInput.value)||3000;let f=photoInput.files[0];if(f){let reader=new FileReader();reader.onload=()=>{profile.photo=reader.result;saveAll();closeProfile();render()};reader.readAsDataURL(f)}else{saveAll();closeProfile();render()}}
+function showOldMonths(){let keys=Object.keys(data).filter(k=>k!==current).sort().reverse();oldMonths.innerHTML=keys.length?keys.map(k=>`<button onclick="openMonth('${k}')" class="w-full p-4 rounded-2xl bg-slate-50 border flex justify-between"><b>${monthName(k)}</b><span>${getEntries(k).reduce((s,e)=>s+e.parcels,0)} পার্সেল</span></button>`).join(''):'<p class="text-sm text-slate-500 text-center py-6">এখনো কোনো পুরোনো মাস নেই।</p>';document.getElementById('oldModal').classList.remove('hide');lucide.createIcons()}
+function closeOld(){document.getElementById('oldModal').classList.add('hide')}
+function openMonth(k){current=k;closeOld();render()}
+function go(p){['Home','Performance','Leaderboard','Profile'].forEach(x=>document.getElementById('page'+x).classList.toggle('hide',x!==p));window.scrollTo({top:0,behavior:'smooth'});if(p==='Profile')renderProfile()}
+function exportCSV(){let es=getEntries();if(!es.length){alert('এই মাসে কোনো হিসাব নেই।');return}let csv='Date,Parcels,Rate,Commission\\n'+es.map(e=>`${e.date},${e.parcels},${e.rate},${e.earning}`).join('\\n');let a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`OSD_${current}_Report.csv`;a.click()}
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body></html>
