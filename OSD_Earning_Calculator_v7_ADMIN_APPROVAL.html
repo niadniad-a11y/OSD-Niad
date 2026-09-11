@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>OSD Delivery Agent Earning Calculator</title>
+  <meta name="theme-color" content="#E2136E">
+
+  <!-- App logo / favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23E2136E'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-size='32' font-weight='900' fill='white'%3EOSD%3C/text%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23E2136E'/%3E%3Ctext x='50' y='63' text-anchor='middle' font-family='Arial' font-size='32' font-weight='900' fill='white'%3EOSD%3C/text%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    body {
+      font-family: 'Noto Sans Bengali', sans-serif;
+      background-color: #f8fafc;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pb-safe { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+
+<body class="text-slate-800 antialiased bg-slate-50 min-h-screen">
+
+<div id="toast-container" class="fixed top-4 right-4 left-4 z-50 flex flex-col gap-2 pointer-events-none max-w-md mx-auto"></div>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 my-8">
+
+    <div class="text-center mb-6">
+      <div class="flex justify-center mb-4">
+        <div class="w-20 h-20 rounded-3xl bg-gradient-to-br from-red-600 to-pink-600 shadow-lg shadow-red-200 flex items-center justify-center">
+          <div class="text-center text-white">
+            <div class="text-2xl font-black tracking-tight leading-none">OSD</div>
+            <div class="text-[9px] font-semibold opacity-90 mt-1">EARNING</div>
+          </div>
+        </div>
+      </div>
+      <h2 id="auth-title" class="text-xl font-bold text-slate-800">লগইন করুন</h2>
+      <p id="auth-subtitle" class="text-xs text-slate-500 mt-1">আপনার অ্যাকাউন্টে প্রবেশ করতে মোবাইল নম্বর লিখুন</p>
+      <div class="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-[10px] font-semibold text-green-700">
+        <i class="fa-solid fa-circle-check"></i> Admin approval required
+      </div>
+      <button type="button" onclick="openAdminModal()" class="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 text-white text-xs font-bold hover:bg-slate-700">
+        <i class="fa-solid fa-user-shield"></i> Admin Panel
+      </button>
+    </div>
+
+    <!-- LOGIN -->
+    <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">মোবাইল নম্বর *</label>
+        <input type="tel" id="login-mobile" required pattern="[0-9]{11}" placeholder="01712345678"
+          class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">পাসওয়ার্ড *</label>
+        <input type="password" id="login-password" required minlength="6" placeholder="কমপক্ষে ৬ অক্ষর"
+          class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+      </div>
+
+      <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-red-200 transition active:scale-95">
+        লগইন করুন
+      </button>
+
+      <p class="text-center text-xs text-slate-600 pt-2">
+        নতুন অ্যাকাউন্ট খুলতে চান?
+        <button type="button" onclick="toggleAuthMode('signup')" class="text-red-600 font-bold underline">সাইন আপ করুন</button>
+      </p>
+    </form>
+
+    <!-- SIGNUP -->
+    <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-4 hidden">
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">আপনার হাব কোনটি? *</label>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="border-2 border-slate-200 rounded-xl p-3 flex items-center justify-center cursor-pointer hover:border-red-500 has-[:checked]:border-red-600 has-[:checked]:bg-red-50">
+            <input type="radio" name="signup-hub" value="Kishoreganj" required class="sr-only">
+            <span class="font-bold text-slate-700">কিশোরগঞ্জ</span>
+          </label>
+          <label class="border-2 border-slate-200 rounded-xl p-3 flex items-center justify-center cursor-pointer hover:border-red-500 has-[:checked]:border-red-600 has-[:checked]:bg-red-50">
+            <input type="radio" name="signup-hub" value="Karimganj" required class="sr-only">
+            <span class="font-bold text-slate-700">করিমগঞ্জ</span>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">এজেন্টের ধরন *</label>
+        <select id="signup-agent-type" required
+          class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+          <option value="">নির্বাচন করুন</option>
+          <option value="OSD Inside Agent">OSD ইনসাইড এজেন্ট (বেসিক: ৩০০০)</option>
+          <option value="OSD Outside Agent">OSD আউটসাইড এজেন্ট (বেসিক: ৫০০০)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">আপনার নাম *</label>
+        <input type="text" id="signup-name" required placeholder="উদাহরণ: মোঃ রহিম"
+          class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">মোবাইল নম্বর *</label>
+        <input type="tel" id="signup-mobile" required pattern="[0-9]{11}" placeholder="01712345678"
+          class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">পাসওয়ার্ড *</label>
+        <input type="password" id="signup-password" required minlength="6" placeholder="কমপক্ষে ৬ অক্ষর"
+          class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+        <p class="text-[10px] text-slate-400 mt-1">এই পাসওয়ার্ড দিয়েই পরে লগইন করবেন।</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">প্রোফাইল ছবি</label>
+        <input type="file" id="signup-photo-input" accept="image/*" onchange="previewAndCompressPhoto(event)"
+          class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
+        <div class="mt-2 flex items-center gap-3">
+          <img id="signup-photo-preview"
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' /%3E%3C/svg%3E"
+            class="w-12 h-12 rounded-full object-cover border-2 border-slate-200">
+          <span class="text-xs text-slate-400">ছবি সাইজ নিজে থেকেই হালকা করা হবে</span>
+        </div>
+      </div>
+
+      <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-red-200 transition active:scale-95 mt-4">
+        অ্যাকাউন্ট তৈরি করুন
+      </button>
+
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-800 mt-3">
+        <i class="fa-solid fa-clock mr-1"></i> অ্যাকাউন্ট তৈরি করার পর Admin approval না পাওয়া পর্যন্ত লগইন করা যাবে না।
+      </div>
+
+      <p class="text-center text-xs text-slate-600 pt-2">
+        আগে থেকেই অ্যাকাউন্ট আছে?
+        <button type="button" onclick="toggleAuthMode('login')" class="text-red-600 font-bold underline">লগইন করুন</button>
+      </p>
+    </form>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app-container" class="hidden max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col pb-safe">
+
+  <!-- HEADER -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-4 py-3 flex items-center justify-between shadow-sm">
+    <div class="flex items-center gap-2">
+      <div class="h-7 flex items-center">
+        <svg class="h-6 w-auto" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 10C11.7157 10 5 16.7157 5 25C5 33.2843 11.7157 40 20 40C28.2843 40 35 33.2843 35 25C35 16.7157 28.2843 10 20 10ZM20 32C16.134 32 13 28.866 13 25C13 21.134 16.134 18 20 18C23.866 18 27 21.134 27 25C27 28.866 23.866 32 20 32Z" fill="#E2136E"/>
+          <path d="M15 25L25 15V35L15 25Z" fill="#E2136E"/>
+          <text x="45" y="33" fill="#1E293B" font-family="sans-serif" font-weight="900" font-size="24" letter-spacing="-0.5">pathao</text>
+          <rect x="135" y="14" width="42" height="18" rx="4" fill="#E2136E"/>
+          <text x="140" y="27" fill="#FFFFFF" font-family="sans-serif" font-weight="700" font-size="11">OSD</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <span id="user-hub-badge" class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-slate-200">হাব: -</span>
+      <button onclick="openAdminModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg">
+        <i class="fa-solid fa-user-shield text-lg"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- DISCLAIMER -->
+  <div class="bg-amber-50 border-b border-amber-200 px-4 py-1.5 text-[11px] text-amber-800 text-center flex items-center justify-center gap-1">
+    <i class="fa-solid fa-circle-info"></i>
+    <span>এটি একটি স্বাধীন ইউটিলিটি টুল। এটি Pathao-এর অফিসিয়াল অ্যাপ নয়।</span>
+  </div>
+
+  <!-- MAIN -->
+  <main class="flex-1 p-4 space-y-4">
+
+    <!-- HOME -->
+    <section id="view-home" class="space-y-4">
+
+      <div class="bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-4 text-white shadow-md flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <img id="dash-agent-photo" src="" class="w-12 h-12 rounded-full border-2 border-white/50 object-cover bg-white">
+          <div>
+            <h1 id="dash-agent-name" class="font-bold text-base leading-snug">-</h1>
+            <p id="dash-agent-type" class="text-xs text-red-100">-</p>
+          </div>
+        </div>
+        <button onclick="switchView('profile')" class="bg-white/20 hover:bg-white/30 text-xs font-medium px-3 py-1.5 rounded-lg backdrop-blur-sm transition">প্রোফাইল</button>
+      </div>
+
+      <button onclick="switchView('leaderboard')" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-3 px-4 rounded-xl shadow-sm flex items-center justify-between transition">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🏆</span>
+          <span class="text-sm">লিডারবোর্ড দেখুন (<span id="dash-hub-name-text">-</span> হাব)</span>
+        </div>
+        <i class="fa-solid fa-chevron-right text-xs"></i>
+      </button>
+
+      <!-- DAILY ENTRY -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+          <h2 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-calendar-day text-red-600"></i>আজকের পারফরম্যান্স এন্ট্রি
+          </h2>
+          <input type="date" id="entry-date" onchange="loadSelectedDateData()"
+            class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-slate-700 font-semibold focus:outline-none focus:ring-1 focus:ring-red-500">
+        </div>
+
+        <form onsubmit="handleSaveDailyEntry(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">ডেলিভারিকৃত পার্সেল সংখ্যা</label>
+            <input type="number" id="entry-parcels" min="0" required placeholder="0" oninput="calculateInstantCommission()"
+              class="w-full text-lg font-bold bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs">
+            <div><span class="text-slate-500">আজকের রেট:</span><p id="instant-rate" class="font-bold text-slate-800 text-sm">0 টাকা</p></div>
+            <div><span class="text-slate-500">আজকের কমিশন:</span><p id="instant-commission" class="font-bold text-red-600 text-sm">0 টাকা</p></div>
+          </div>
+
+          <div id="next-rate-banner" class="hidden text-[11px] bg-blue-50 text-blue-700 p-2 rounded-lg border border-blue-100 flex items-center gap-1.5">
+            <i class="fa-solid fa-bullseye text-blue-500"></i>
+            <span id="next-rate-text">পরবর্তী রেটে যেতে আরও Xটি পার্সেল প্রয়োজন</span>
+          </div>
+
+          <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-xl text-sm transition">তথ্য সংরক্ষণ করুন</button>
+        </form>
+      </div>
+
+      <!-- TODAY SUMMARY -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider text-slate-400">আজকের সংক্ষেপ</h3>
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-slate-50 p-2 rounded-xl border border-slate-100"><p class="text-[10px] text-slate-500 font-medium">আজকের ডেলিভারি</p><p id="dash-today-parcels" class="text-base font-extrabold text-slate-800">0টি</p></div>
+          <div class="bg-slate-50 p-2 rounded-xl border border-slate-100"><p class="text-[10px] text-slate-500 font-medium">আজকের রেট</p><p id="dash-today-rate" class="text-base font-extrabold text-slate-800">0 টাকা</p></div>
+          <div class="bg-slate-50 p-2 rounded-xl border border-slate-100"><p class="text-[10px] text-slate-500 font-medium">আজকের কমিশন</p><p id="dash-today-commission" class="text-base font-extrabold text-red-600">0 টাকা</p></div>
+        </div>
+      </div>
+
+      <!-- MONTHLY PERFORMANCE -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-slate-800 text-sm">এই মাসের পারফরম্যান্স</h3>
+          <span id="dash-current-month-label" class="text-xs bg-slate-100 text-slate-600 font-semibold px-2 py-0.5 rounded">-</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-red-50/50 p-3 rounded-xl border border-red-100"><p class="text-xs text-slate-500">মোট ডেলিভারি</p><p id="dash-month-parcels" class="text-xl font-black text-slate-800">0টি</p></div>
+          <div class="bg-red-50/50 p-3 rounded-xl border border-red-100"><p class="text-xs text-slate-500">মোট কমিশন</p><p id="dash-month-commission" class="text-xl font-black text-red-600">0 টাকা</p></div>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100"><p class="text-xs text-slate-500">বেস গ্রস বেতন</p><p id="dash-base-salary-display" class="text-lg font-bold text-slate-700">0 টাকা</p></div>
+          <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100"><p class="text-xs text-emerald-700 font-medium">মোট আনুমানিক আয়</p><p id="dash-month-total-earning" class="text-lg font-black text-emerald-600">0 টাকা</p></div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-center text-xs">
+          <div><p class="text-slate-400">দৈনিক গড়</p><p id="dash-avg-parcels" class="font-bold text-slate-700">0টি</p></div>
+          <div><p class="text-slate-400">দৈনিক গড় আয়</p><p id="dash-avg-earning" class="font-bold text-slate-700">0 টাকা</p></div>
+          <div><p class="text-slate-400">কাজের দিন</p><p id="dash-working-days" class="font-bold text-slate-700">0 দিন</p></div>
+        </div>
+
+        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs flex justify-between items-center">
+          <span class="text-slate-500">বর্তমান অবস্থান (র‍্যাঙ্ক):</span>
+          <span id="dash-current-rank" class="font-bold text-red-600"># -</span>
+        </div>
+      </div>
+
+      <!-- COMMISSION TABLE -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-2">
+        <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider text-slate-400" id="rate-table-title">কমিশন স্ল্যাব রেট</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead><tr class="bg-slate-100 text-slate-600 border-b border-slate-200"><th class="p-2 rounded-l-lg">পার্সেল সংখ্যা</th><th class="p-2 rounded-r-lg text-right">প্রতি পার্সেল কমিশন</th></tr></thead>
+            <tbody id="rate-table-body" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PERFORMANCE -->
+    <section id="view-performance" class="hidden space-y-4">
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+        <h2 class="font-bold text-slate-800 text-base mb-3">পারফরম্যান্স বিশ্লেষণ</h2>
+        <div class="space-y-3">
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-2">
+            <div class="flex justify-between text-xs font-semibold"><span class="text-slate-600">মাসিক পার্সেল লক্ষ্যমাত্রা অগ্রগতি</span><span id="perf-target-text" class="text-red-600">0 / 600 পার্সেল</span></div>
+            <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden"><div id="perf-target-bar" class="bg-red-600 h-2.5 rounded-full transition-all duration-500" style="width:0%"></div></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100"><span class="text-slate-400">সেরা দিন ডেলিভারি</span><p id="perf-best-day" class="font-bold text-slate-800 text-sm">0টি</p></div>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100"><span class="text-slate-400">সেরা দিন আয়</span><p id="perf-best-earning" class="font-bold text-emerald-600 text-sm">0 টাকা</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between"><h3 class="font-bold text-slate-800 text-sm">দৈনিক এন্ট্রি ইতিহাস</h3><span class="text-xs text-slate-400" id="history-count">0টি রেকর্ড</span></div>
+        <div id="history-list" class="space-y-2 max-h-80 overflow-y-auto pr-1"></div>
+      </div>
+    </section>
+
+    <!-- LEADERBOARD -->
+    <section id="view-leaderboard" class="hidden space-y-4">
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-slate-800 text-base flex items-center gap-2"><span>🏆</span><span>লিডারবোর্ড</span></h2>
+          <span id="leaderboard-hub-tag" class="bg-red-50 text-red-600 text-xs font-bold px-2.5 py-1 rounded-full border border-red-100">হাব: -</span>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="setLeaderboardFilter('this_month')" id="filter-btn-this" class="flex-1 py-1.5 text-xs font-bold rounded-lg border transition bg-red-600 text-white border-red-600">এই মাস</button>
+          <button onclick="setLeaderboardFilter('last_month')" id="filter-btn-last" class="flex-1 py-1.5 text-xs font-bold rounded-lg border transition bg-slate-50 text-slate-600 border-slate-200">গত মাস</button>
+          <input type="month" id="filter-custom-month" onchange="setLeaderboardFilter('custom')" class="bg-slate-50 border border-slate-200 rounded-lg text-xs px-2 py-1 text-slate-700 font-medium focus:outline-none">
+        </div>
+      </div>
+
+      <div id="user-rank-banner" class="bg-slate-800 text-white rounded-2xl p-3.5 shadow-md space-y-1">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-2"><span id="my-rank-badge" class="bg-amber-400 text-slate-900 font-extrabold text-xs px-2 py-0.5 rounded-full"># -</span><span class="font-bold text-sm">আপনার অবস্থান</span></div>
+          <span id="my-rank-parcels" class="text-xs font-semibold text-slate-300">0টি পার্সেল</span>
+        </div>
+        <p id="my-rank-gap" class="text-xs text-amber-300 font-medium">আপনার পারফরম্যান্স চেক করুন...</p>
+      </div>
+
+      <div id="leaderboard-list" class="space-y-2"></div>
+    </section>
+
+    <!-- PROFILE -->
+    <section id="view-profile" class="hidden space-y-4">
+      <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm text-center space-y-3">
+        <div class="relative inline-block"><img id="profile-view-photo" src="" class="w-24 h-24 rounded-full border-4 border-red-500 object-cover mx-auto shadow"></div>
+        <div><h2 id="profile-view-name" class="font-bold text-lg text-slate-800">-</h2><p id="profile-view-mobile" class="text-xs text-slate-500">-</p></div>
+        <div class="flex justify-center gap-2 text-xs">
+          <span id="profile-view-hub" class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full font-semibold border border-slate-200">হাব: -</span>
+          <span id="profile-view-type" class="bg-red-50 text-red-700 px-3 py-1 rounded-full font-semibold border border-red-100">-</span>
+        </div>
+        <button onclick="handleLogout()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl text-xs transition border border-red-200 mt-2 flex items-center justify-center gap-2"><i class="fa-solid fa-right-from-bracket"></i><span>লগআউট করুন</span></button>
+      </div>
+
+      <!-- ARCHIVE -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2"><i class="fa-solid fa-box-archive text-red-600"></i>মাসিক আর্কাইভ</h3>
+          <span class="text-[10px] text-slate-400">পুরনো মাস</span>
+        </div>
+        <div id="archive-list" class="space-y-2"></div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-2 text-xs text-slate-600">
+        <h3 class="font-bold text-slate-800 text-sm">অ্যাপ সম্পর্কে</h3>
+        <p>OSD Delivery Agent Earning & Leaderboard Utility</p>
+        <p>ভার্সন: 7.0.0 (Admin Approval, Reject, Block, Remove & Monthly Archive)</p>
+        <p class="text-[10px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2">নোট: এটি একটি independent utility tool এবং Pathao-এর অফিসিয়াল অ্যাপ নয়।</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- NAVIGATION -->
+  <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-slate-200 z-30 flex items-center justify-around py-2 px-1 shadow-lg">
+    <button onclick="switchView('home')" id="nav-home" class="flex-1 flex flex-col items-center justify-center py-1 text-red-600"><i class="fa-solid fa-house text-lg"></i><span class="text-[10px] font-bold mt-1">হোম</span></button>
+    <button onclick="switchView('performance')" id="nav-performance" class="flex-1 flex flex-col items-center justify-center py-1 text-slate-400"><i class="fa-solid fa-chart-line text-lg"></i><span class="text-[10px] font-bold mt-1">পারফরম্যান্স</span></button>
+    <button onclick="switchView('leaderboard')" id="nav-leaderboard" class="flex-1 flex flex-col items-center justify-center py-1 text-slate-400"><i class="fa-solid fa-trophy text-lg"></i><span class="text-[10px] font-bold mt-1">লিডারবোর্ড</span></button>
+    <button onclick="switchView('profile')" id="nav-profile" class="flex-1 flex flex-col items-center justify-center py-1 text-slate-400"><i class="fa-solid fa-user text-lg"></i><span class="text-[10px] font-bold mt-1">প্রোফাইল</span></button>
+  </nav>
+</div>
+
+<!-- ADMIN MODAL -->
+<div id="admin-modal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden">
+
+    <div class="p-4 bg-slate-800 text-white flex justify-between items-center">
+      <h3 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-user-shield text-red-500"></i>এডমিন প্যানেল</h3>
+      <button onclick="closeAdminModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+
+    <div id="admin-login-view" class="p-6 space-y-4">
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+        <i class="fa-solid fa-shield-halved mr-1"></i>
+        শুধু Admin password দিয়ে এই panel-এ প্রবেশ করা যাবে।
+      </div>
+      <input type="password" id="admin-passcode" placeholder="Admin password"
+        class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+      <button onclick="verifyAdminPasscode()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl text-sm">প্রবেশ করুন</button>
+    </div>
+
+    <div id="admin-content-view" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
+
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 flex items-center gap-2">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>Admin mode active</span>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
+          <h4 class="font-bold text-[10px] text-slate-600 mb-1">মোট User</h4>
+          <p id="admin-user-count" class="text-xl font-black text-red-600">0</p>
+        </div>
+        <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-center">
+          <h4 class="font-bold text-[10px] text-amber-700 mb-1">Pending</h4>
+          <p id="admin-pending-count" class="text-xl font-black text-amber-600">0</p>
+        </div>
+        <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 text-center">
+          <h4 class="font-bold text-[10px] text-emerald-700 mb-1">Approved</h4>
+          <p id="admin-approved-count" class="text-xl font-black text-emerald-600">0</p>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="font-bold text-sm text-slate-800">User Management</h4>
+          <button onclick="loadAdminAgentsList()" class="text-[10px] font-bold text-slate-500 hover:text-red-600"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+        <div id="admin-agents-list" class="space-y-2"></div>
+      </div>
+
+      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-[10px] text-slate-500">
+        <b>Approval:</b> Pending user আগে app-এ ঢুকতে পারবে না। Approve করলে লগইন করতে পারবে। Reject করলে লগইন বন্ধ থাকবে।<br>
+        Remove করলে user account এবং তার সব daily records এই browser-এর local data থেকে মুছে যাবে।
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   COMMISSION RATES
+========================================================= */
+
+const COMMISSION_RATES = {
+  'OSD Inside Agent': [
+    { min: 0, max: 24, rate: 23 },
+    { min: 25, max: 29, rate: 27 },
+    { min: 30, max: 39, rate: 31 },
+    { min: 40, max: 49, rate: 33 },
+    { min: 50, max: Infinity, rate: 35 }
+  ],
+  'OSD Outside Agent': [
+    { min: 0, max: 24, rate: 30 },
+    { min: 25, max: 29, rate: 33 },
+    { min: 30, max: 34, rate: 35 },
+    { min: 35, max: 39, rate: 36 },
+    { min: 40, max: Infinity, rate: 38 }
+  ]
+};
+
+function getBaseSalary(agentType) {
+  return agentType === 'OSD Outside Agent' ? 5000 : 3000;
+}
+
+let currentUser = null;
+let compressedPhotoData = "";
+let currentSelectedMonthFilter = 'this_month';
+
+/* =========================================================
+   SECURITY / HELPERS
+========================================================= */
+
+function getAdminPasscode() {
+  return 'niad3388';
+}
+
+function escapeHTML(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function getMonthKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
+
+function getMonthLabel(monthKey) {
+  const parts = monthKey.split('-');
+  const year = parts[0];
+  const month = parseInt(parts[1], 10);
+  const names = ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+  return `${names[month - 1]} ${year}`;
+}
+
+/* =========================================================
+   ACCOUNT STORAGE
+========================================================= */
+
+function getAllAccounts() {
+  try {
+    return JSON.parse(localStorage.getItem('osd_all_accounts') || '[]');
+  } catch(e) {
+    return [];
+  }
+}
+
+function saveAllAccounts(accounts) {
+  localStorage.setItem('osd_all_accounts', JSON.stringify(accounts));
+}
+
+/* =========================================================
+   DAILY RECORD STORAGE
+========================================================= */
+
+function getLocalRecords() {
+  try {
+    return JSON.parse(localStorage.getItem('osd_daily_records') || '[]');
+  } catch(e) {
+    return [];
+  }
+}
+
+function saveLocalRecords(records) {
+  localStorage.setItem('osd_daily_records', JSON.stringify(records));
+}
+
+/* =========================================================
+   MONTHLY ARCHIVE
+   পুরনো data delete হয় না।
+   শুধু পুরনো মাসগুলোকে archive index হিসেবে track করা হয়।
+========================================================= */
+
+function getArchivedMonths() {
+  try {
+    return JSON.parse(localStorage.getItem('osd_archived_months') || '[]');
+  } catch(e) {
+    return [];
+  }
+}
+
+function saveArchivedMonths(months) {
+  localStorage.setItem('osd_archived_months', JSON.stringify(months));
+}
+
+function runMonthlyArchive() {
+  const currentMonth = getMonthKey();
+  const records = getLocalRecords();
+
+  const monthsWithData = [
+    ...new Set(
+      records
+        .map(r => r.date ? r.date.substring(0, 7) : null)
+        .filter(Boolean)
+    )
+  ];
+
+  let archivedMonths = getArchivedMonths();
+
+  monthsWithData.forEach(month => {
+    if (month < currentMonth && !archivedMonths.includes(month)) {
+      archivedMonths.push(month);
+    }
+  });
+
+  archivedMonths = [...new Set(archivedMonths)].sort();
+  saveArchivedMonths(archivedMonths);
+}
+
+/* =========================================================
+   PAGE LOAD
+========================================================= */
+
+window.addEventListener('DOMContentLoaded', () => {
+
+  runMonthlyArchive();
+
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  document.getElementById('entry-date').value = todayStr;
+
+  const activeUserId = localStorage.getItem('osd_active_user_id');
+  const accounts = getAllAccounts();
+
+  if (activeUserId && accounts.length > 0) {
+    const found = accounts.find(a => a.id === activeUserId);
+
+    if (found) {
+      currentUser = found;
+      showAppMain();
+      return;
+    }
+  }
+
+  showAuthScreen();
+});
+
+/* =========================================================
+   AUTH
+========================================================= */
+
+function showAuthScreen() {
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('app-container').classList.add('hidden');
+}
+
+function showAppMain() {
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('app-container').classList.remove('hidden');
+  updateAppUI();
+}
+
+function toggleAuthMode(mode) {
+  const loginForm = document.getElementById('login-form');
+  const signupForm = document.getElementById('signup-form');
+  const title = document.getElementById('auth-title');
+  const subtitle = document.getElementById('auth-subtitle');
+
+  if (mode === 'signup') {
+    loginForm.classList.add('hidden');
+    signupForm.classList.remove('hidden');
+    title.innerText = 'নতুন অ্যাকাউন্ট তৈরি করুন';
+    subtitle.innerText = 'ক্যালকুলেটর ব্যবহার করতে সাইন আপ করুন';
+  } else {
+    signupForm.classList.add('hidden');
+    loginForm.classList.remove('hidden');
+    title.innerText = 'লগইন করুন';
+    subtitle.innerText = 'আপনার অ্যাকাউন্টে প্রবেশ করতে মোবাইল নম্বর লিখুন';
+  }
+}
+
+/* =========================================================
+   PHOTO
+========================================================= */
+
+function previewAndCompressPhoto(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    const img = new Image();
+
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+
+      let width = img.width;
+      let height = img.height;
+      const max_size = 300;
+
+      if (width > height) {
+        if (width > max_size) {
+          height *= max_size / width;
+          width = max_size;
+        }
+      } else {
+        if (height > max_size) {
+          width *= max_size / height;
+          height = max_size;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      compressedPhotoData = canvas.toDataURL('image/jpeg', 0.7);
+      document.getElementById('signup-photo-preview').src = compressedPhotoData;
+    };
+
+    img.src = e.target.result;
+  };
+
+  reader.readAsDataURL(file);
+}
+
+/* =========================================================
+   SIGNUP
+========================================================= */
+
+function handleSignup(event) {
+  event.preventDefault();
+
+  const hub = document.querySelector('input[name="signup-hub"]:checked')?.value;
+  const agentType = document.getElementById('signup-agent-type').value;
+  const name = document.getElementById('signup-name').value.trim();
+  const mobile = document.getElementById('signup-mobile').value.trim();
+  const password = document.getElementById('signup-password').value;
+
+  if (!hub || !agentType || !name || !/^\d{11}$/.test(mobile) || password.length < 6) {
+    showToast('সব তথ্য সঠিকভাবে পূরণ করুন। Password কমপক্ষে ৬ অক্ষরের হতে হবে।', 'error');
+    return;
+  }
+
+  const accounts = getAllAccounts();
+  const existing = accounts.find(a => a.mobile === mobile);
+
+  if (existing) {
+    showToast('এই মোবাইল নম্বরে ইতিমধ্যে অ্যাকাউন্ট আছে! লগইন করুন।', 'error');
+    toggleAuthMode('login');
+    document.getElementById('login-mobile').value = mobile;
+    return;
+  }
+
+  const defaultPhoto = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7-7h14a7 7 0 00-7 7z' /%3E%3C/svg%3E";
+
+  const newUser = {
+    id: 'agent_' + Date.now(),
+    hub,
+    agent_type: agentType,
+    name,
+    mobile,
+    password,
+    photo: compressedPhotoData || defaultPhoto,
+    status: 'pending',
+    created_at: new Date().toISOString()
+  };
+
+  accounts.push(newUser);
+  saveAllAccounts(accounts);
+
+  currentUser = null;
+  localStorage.removeItem('osd_active_user_id');
+
+  showToast('অ্যাকাউন্ট তৈরি হয়েছে। Admin approval পাওয়ার পর লগইন করতে পারবেন।', 'success');
+  document.getElementById('signup-form').reset();
+  compressedPhotoData = '';
+  toggleAuthMode('login');
+  document.getElementById('login-mobile').value = mobile;
+}
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+function handleLogin(event) {
+  event.preventDefault();
+
+  const mobile = document.getElementById('login-mobile').value.trim();
+  const password = document.getElementById('login-password').value;
+
+  if (!/^\d{11}$/.test(mobile) || password.length < 6) {
+    showToast('১১ সংখ্যার মোবাইল নম্বর ও কমপক্ষে ৬ অক্ষরের Password দিন।', 'error');
+    return;
+  }
+
+  const accounts = getAllAccounts();
+  const user = accounts.find(a => a.mobile === mobile);
+
+  if (!user) {
+    showToast('এই নম্বর দিয়ে কোনো অ্যাকাউন্ট নেই। আগে Sign Up করুন।', 'error');
+    toggleAuthMode('signup');
+    document.getElementById('signup-mobile').value = mobile;
+    return;
+  }
+
+  // পুরনো v3 account হলে প্রথমবারের জন্য 123456 password ধরা হবে।
+  // Login করার পর Profile থেকে logout করে নতুন account বানানোর দরকার নেই।
+  // Existing old account-এর জন্য 123456 ব্যবহার করা যাবে।
+  const savedPassword = user.password || '123456';
+
+  if (password !== savedPassword) {
+    showToast('মোবাইল নম্বর বা Password ভুল।', 'error');
+    return;
+  }
+
+  // Backward compatibility: old accounts without status are treated as approved.
+  const accountStatus = user.status || 'approved';
+
+  if (accountStatus === 'pending') {
+    showToast('আপনার account এখনো Admin approval-এর অপেক্ষায় আছে।', 'error');
+    return;
+  }
+
+  if (accountStatus === 'rejected') {
+    showToast('আপনার account Admin reject করেছে। Admin-এর সাথে যোগাযোগ করুন।', 'error');
+    return;
+  }
+
+  if (accountStatus === 'blocked') {
+    showToast('আপনার account blocked করা হয়েছে।', 'error');
+    return;
+  }
+
+  currentUser = user;
+  localStorage.setItem('osd_active_user_id', user.id);
+  showToast('লগইন সফল হয়েছে!', 'success');
+  showAppMain();
+}
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+function handleLogout() {
+  if (!confirm('আপনি কি নিশ্চিত যে আপনি লগআউট করতে চান?')) return;
+
+  localStorage.removeItem('osd_active_user_id');
+  currentUser = null;
+
+  showToast('লগআউট করা হয়েছে', 'info');
+  toggleAuthMode('login');
+  showAuthScreen();
+}
+
+/* =========================================================
+   UPDATE UI
+========================================================= */
+
+function updateAppUI() {
+  if (!currentUser) return;
+
+  const hubName = currentUser.hub === 'Kishoreganj' ? 'কিশোরগঞ্জ' : 'করিমগঞ্জ';
+
+  document.getElementById('user-hub-badge').innerText = `হাব: ${hubName}`;
+  document.getElementById('dash-agent-name').innerText = currentUser.name;
+  document.getElementById('dash-agent-type').innerText = currentUser.agent_type;
+  document.getElementById('dash-agent-photo').src = currentUser.photo;
+  document.getElementById('dash-hub-name-text').innerText = hubName;
+
+  document.getElementById('profile-view-name').innerText = currentUser.name;
+  document.getElementById('profile-view-mobile').innerText = currentUser.mobile;
+  document.getElementById('profile-view-photo').src = currentUser.photo;
+  document.getElementById('profile-view-hub').innerText = `হাব: ${hubName}`;
+  document.getElementById('profile-view-type').innerText = currentUser.agent_type;
+
+  const baseSalary = getBaseSalary(currentUser.agent_type);
+  document.getElementById('dash-base-salary-display').innerText = `${baseSalary} টাকা`;
+
+  renderCommissionTable();
+  loadSelectedDateData();
+  loadDashboardMonthlyStats();
+  renderArchiveList();
+}
+
+/* =========================================================
+   COMMISSION TABLE
+========================================================= */
+
+function renderCommissionTable() {
+  const type = currentUser.agent_type || 'OSD Inside Agent';
+  const rates = COMMISSION_RATES[type] || COMMISSION_RATES['OSD Inside Agent'];
+
+  document.getElementById('rate-table-title').innerText = `কমিশন স্ল্যাব রেট (${type})`;
+
+  const tbody = document.getElementById('rate-table-body');
+
+  tbody.innerHTML = rates.map(r => {
+    const rangeText = r.max === Infinity ? `${r.min}+` : `${r.min}–${r.max}`;
+
+    return `
+      <tr class="hover:bg-slate-50">
+        <td class="p-2 text-slate-700 font-medium">${rangeText} টি</td>
+        <td class="p-2 text-right font-bold text-slate-800">${r.rate} টাকা</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+/* =========================================================
+   CALCULATE RATE
+========================================================= */
+
+function calculateRateForParcels(count, agentType) {
+  const type = agentType || currentUser?.agent_type || 'OSD Inside Agent';
+  const rates = COMMISSION_RATES[type];
+
+  for (let r of rates) {
+    if (count >= r.min && count <= r.max) return r.rate;
+  }
+
+  return 0;
+}
+
+/* =========================================================
+   INSTANT COMMISSION
+========================================================= */
+
+function calculateInstantCommission() {
+  if (!currentUser) return;
+
+  const parcels = parseInt(document.getElementById('entry-parcels').value) || 0;
+  const rate = calculateRateForParcels(parcels, currentUser.agent_type);
+  const commission = parcels * rate;
+
+  document.getElementById('instant-rate').innerText = `${rate} টাকা`;
+  document.getElementById('instant-commission').innerText = `${commission} টাকা`;
+
+  const banner = document.getElementById('next-rate-banner');
+  const bannerText = document.getElementById('next-rate-text');
+
+  const rates = COMMISSION_RATES[currentUser.agent_type];
+  let currentTierIndex = rates.findIndex(r => parcels >= r.min && parcels <= r.max);
+
+  if (currentTierIndex !== -1 && currentTierIndex < rates.length - 1) {
+    const nextTier = rates[currentTierIndex + 1];
+    const parcelsNeeded = nextTier.min - parcels;
+
+    bannerText.innerText = `পরবর্তী রেটে (${nextTier.rate} টাকা) যেতে আরও ${parcelsNeeded}টি পার্সেল প্রয়োজন`;
+    banner.classList.remove('hidden');
+  } else {
+    banner.classList.add('hidden');
+  }
+}
+
+/* =========================================================
+   LOAD SELECTED DATE
+========================================================= */
+
+function loadSelectedDateData() {
+  if (!currentUser) return;
+
+  const dateStr = document.getElementById('entry-date').value;
+  if (!dateStr) return;
+
+  const records = getLocalRecords();
+
+  const record = records.find(r =>
+    r.agent_id === currentUser.id &&
+    r.date === dateStr
+  );
+
+  if (record) {
+    document.getElementById('entry-parcels').value = record.parcels;
+    document.getElementById('dash-today-parcels').innerText = `${record.parcels}টি`;
+    document.getElementById('dash-today-rate').innerText = `${record.rate} টাকা`;
+    document.getElementById('dash-today-commission').innerText = `${record.commission} টাকা`;
+  } else {
+    document.getElementById('entry-parcels').value = '';
+    document.getElementById('dash-today-parcels').innerText = '0টি';
+    document.getElementById('dash-today-rate').innerText = '0 টাকা';
+    document.getElementById('dash-today-commission').innerText = '0 টাকা';
+  }
+
+  calculateInstantCommission();
+}
+
+/* =========================================================
+   SAVE DAILY ENTRY
+========================================================= */
+
+function handleSaveDailyEntry(event) {
+  event.preventDefault();
+  if (!currentUser) return;
+
+  const dateStr = document.getElementById('entry-date').value;
+  const parcels = parseInt(document.getElementById('entry-parcels').value) || 0;
+
+  if (!dateStr) {
+    showToast('তারিখ নির্বাচন করুন', 'error');
+    return;
+  }
+
+  const rate = calculateRateForParcels(parcels, currentUser.agent_type);
+  const commission = parcels * rate;
+
+  let records = getLocalRecords();
+
+  const existingIndex = records.findIndex(r =>
+    r.agent_id === currentUser.id &&
+    r.date === dateStr
+  );
+
+  const newRecord = {
+    agent_id: currentUser.id,
+    date: dateStr,
+    parcels,
+    rate,
+    commission,
+    hub: currentUser.hub
+  };
+
+  if (existingIndex !== -1) records[existingIndex] = newRecord;
+  else records.push(newRecord);
+
+  saveLocalRecords(records);
+
+  runMonthlyArchive();
+
+  document.getElementById('dash-today-parcels').innerText = `${parcels}টি`;
+  document.getElementById('dash-today-rate').innerText = `${rate} টাকা`;
+  document.getElementById('dash-today-commission').innerText = `${commission} টাকা`;
+
+  document.getElementById('entry-parcels').value = '';
+
+  calculateInstantCommission();
+  loadDashboardMonthlyStats();
+  renderArchiveList();
+
+  showToast('তথ্য সংরক্ষিত হয়েছে', 'success');
+}
+
+/* =========================================================
+   MONTHLY DASHBOARD
+========================================================= */
+
+function loadDashboardMonthlyStats() {
+  if (!currentUser) return;
+
+  const monthFormatted = getMonthKey();
+
+  document.getElementById('dash-current-month-label').innerText = getMonthLabel(monthFormatted);
+
+  const allRecords = getLocalRecords();
+
+  const monthlyRecords = allRecords.filter(r =>
+    r.agent_id === currentUser.id &&
+    r.date.startsWith(monthFormatted)
+  );
+
+  const totalParcels = monthlyRecords.reduce((sum, r) => sum + (r.parcels || 0), 0);
+  const totalCommission = monthlyRecords.reduce((sum, r) => sum + (r.commission || 0), 0);
+
+  const baseSalary = getBaseSalary(currentUser.agent_type);
+  const totalEarning = baseSalary + totalCommission;
+
+  const workingDays = monthlyRecords.filter(r => r.parcels > 0).length;
+
+  const avgParcels = workingDays > 0 ? (totalParcels / workingDays).toFixed(1) : 0;
+  const avgEarning = workingDays > 0 ? Math.round(totalEarning / workingDays) : 0;
+
+  let bestDayParcels = 0;
+  let bestDayCommission = 0;
+
+  monthlyRecords.forEach(r => {
+    if (r.parcels > bestDayParcels) {
+      bestDayParcels = r.parcels;
+      bestDayCommission = r.commission;
+    }
+  });
+
+  document.getElementById('dash-month-parcels').innerText = `${totalParcels}টি`;
+  document.getElementById('dash-month-commission').innerText = `${totalCommission} টাকা`;
+  document.getElementById('dash-month-total-earning').innerText = `${totalEarning} টাকা`;
+  document.getElementById('dash-avg-parcels').innerText = `${avgParcels}টি`;
+  document.getElementById('dash-avg-earning').innerText = `${avgEarning} টাকা`;
+  document.getElementById('dash-working-days').innerText = `${workingDays} দিন`;
+
+  document.getElementById('perf-target-text').innerText = `${totalParcels} / 600 পার্সেল`;
+
+  const progressPercent = Math.min(100, Math.round((totalParcels / 600) * 100));
+  document.getElementById('perf-target-bar').style.width = `${progressPercent}%`;
+
+  document.getElementById('perf-best-day').innerText = `${bestDayParcels}টি`;
+  document.getElementById('perf-best-earning').innerText = `${bestDayCommission} টাকা`;
+
+  renderDailyHistory([...monthlyRecords]);
+}
+
+/* =========================================================
+   DAILY HISTORY
+========================================================= */
+
+function renderDailyHistory(records) {
+  const historyContainer = document.getElementById('history-list');
+
+  document.getElementById('history-count').innerText = `${records.length}টি রেকর্ড`;
+
+  if (records.length === 0) {
+    historyContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">কোন এন্ট্রি তথ্য পাওয়া যায়নি</p>`;
+    return;
+  }
+
+  records.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  historyContainer.innerHTML = records.map(r => `
+    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 flex justify-between items-center text-xs">
+      <div>
+        <span class="font-bold text-slate-800">${escapeHTML(r.date)}</span>
+        <p class="text-slate-500 text-[11px]">${r.parcels}টি পার্সেল @ ${r.rate} টাকা</p>
+      </div>
+      <div class="text-right">
+        <span class="font-bold text-red-600 text-sm">${r.commission} টাকা</span>
+        <button onclick="deleteDailyRecord('${r.date}')" class="text-slate-400 hover:text-red-500 ml-2">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* =========================================================
+   DELETE RECORD
+========================================================= */
+
+function deleteDailyRecord(dateStr) {
+  if (!confirm(`${dateStr} তারিখের রেকর্ডটি মুছে ফেলতে চান?`)) return;
+
+  let records = getLocalRecords();
+
+  records = records.filter(r =>
+    !(r.agent_id === currentUser.id && r.date === dateStr)
+  );
+
+  saveLocalRecords(records);
+
+  runMonthlyArchive();
+  showToast('রেকর্ড মুছে ফেলা হয়েছে', 'success');
+
+  updateAppUI();
+}
+
+/* =========================================================
+   ARCHIVE DISPLAY
+========================================================= */
+
+function renderArchiveList() {
+  const container = document.getElementById('archive-list');
+  if (!container || !currentUser) return;
+
+  runMonthlyArchive();
+
+  const currentMonth = getMonthKey();
+  const archivedMonths = getArchivedMonths();
+
+  const records = getLocalRecords();
+
+  const userRecords = records.filter(r => r.agent_id === currentUser.id);
+
+  const archiveData = archivedMonths
+    .filter(month => month < currentMonth)
+    .reverse()
+    .map(month => {
+      const monthRecords = userRecords.filter(r => r.date.startsWith(month));
+
+      const parcels = monthRecords.reduce((sum, r) => sum + (r.parcels || 0), 0);
+      const commission = monthRecords.reduce((sum, r) => sum + (r.commission || 0), 0);
+      const days = monthRecords.filter(r => r.parcels > 0).length;
+
+      return { month, parcels, commission, days };
+    });
+
+  if (archiveData.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-4 text-xs text-slate-400">
+        এখনো কোন পুরনো মাসের archive নেই।
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = archiveData.map(a => `
+    <div class="bg-slate-50 border border-slate-100 rounded-xl p-3">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="font-bold text-slate-800 text-xs">${getMonthLabel(a.month)}</p>
+          <p class="text-[10px] text-slate-400 mt-0.5">${a.days} দিন কাজ</p>
+        </div>
+        <div class="text-right">
+          <p class="font-black text-slate-800 text-sm">${a.parcels}টি</p>
+          <p class="text-[10px] text-red-600 font-bold">${a.commission} টাকা কমিশন</p>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* =========================================================
+   LEADERBOARD
+========================================================= */
+
+function fetchAndRenderLeaderboard() {
+  if (!currentUser) return;
+
+  const userHub = currentUser.hub;
+  const hubName = userHub === 'Kishoreganj' ? 'কিশোরগঞ্জ' : 'করিমগঞ্জ';
+
+  document.getElementById('leaderboard-hub-tag').innerText = `হাব: ${hubName}`;
+
+  const now = new Date();
+  let monthStr = '';
+
+  if (currentSelectedMonthFilter === 'this_month') {
+    monthStr = getMonthKey(now);
+  } else if (currentSelectedMonthFilter === 'last_month') {
+    const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    monthStr = getMonthKey(lastMonthDate);
+  } else {
+    monthStr = document.getElementById('filter-custom-month').value || getMonthKey(now);
+  }
+
+  const allRecords = getLocalRecords();
+  const accounts = getAllAccounts();
+
+  const monthRecords = allRecords.filter(r =>
+    r.hub === userHub &&
+    r.date.startsWith(monthStr)
+  );
+
+  const agentMap = {};
+
+  accounts
+    .filter(a => a.hub === userHub)
+    .forEach(a => {
+      const baseSalary = getBaseSalary(a.agent_type);
+
+      agentMap[a.id] = {
+        agent_id: a.id,
+        name: a.name,
+        photo: a.photo,
+        agent_type: a.agent_type,
+        hub: a.hub,
+        total_parcels: 0,
+        total_commission: 0,
+        total_earning: baseSalary,
+        working_days: 0,
+        avg_daily_parcels: 0,
+        avg_daily_earning: 0
+      };
+    });
+
+  monthRecords.forEach(r => {
+    if (agentMap[r.agent_id]) {
+      const a = agentMap[r.agent_id];
+
+      a.total_parcels += r.parcels || 0;
+      a.total_commission += r.commission || 0;
+      a.total_earning = getBaseSalary(a.agent_type) + a.total_commission;
+
+      if (r.parcels > 0) a.working_days += 1;
+    }
+  });
+
+  const leaderboardData = Object.values(agentMap);
+
+  leaderboardData.forEach(a => {
+    a.avg_daily_parcels = a.working_days > 0 ? a.total_parcels / a.working_days : 0;
+    a.avg_daily_earning = a.working_days > 0 ? a.total_earning / a.working_days : 0;
+  });
+
+  leaderboardData.sort((a, b) => {
+    if (b.total_parcels !== a.total_parcels) return b.total_parcels - a.total_parcels;
+    if (b.total_commission !== a.total_commission) return b.total_commission - a.total_commission;
+    return b.avg_daily_parcels - a.avg_daily_parcels;
+  });
+
+  renderLeaderboardList(leaderboardData);
+}
+
+/* =========================================================
+   LEADERBOARD FILTER
+========================================================= */
+
+function setLeaderboardFilter(filterType) {
+  currentSelectedMonthFilter = filterType;
+
+  document.getElementById('filter-btn-this').className =
+    filterType === 'this_month'
+      ? 'flex-1 py-1.5 text-xs font-bold rounded-lg border transition bg-red-600 text-white border-red-600'
+      : 'flex-1 py-1.5 text-xs font-bold rounded-lg border transition bg-slate-50 text-slate-600 border-slate-200';
+
+  document.getElementById('filter-btn-last').className =
+    filterType === 'last_month'
+      ? 'flex-1 py-1.5 text-xs font-bold rounded-lg border transition bg-red-600 text-white border-red-600'
+      : 'flex-1 py-1.5 text-xs font-bold rounded-lg border transition bg-slate-50 text-slate-600 border-slate-200';
+
+  fetchAndRenderLeaderboard();
+}
+
+/* =========================================================
+   LEADERBOARD DISPLAY
+========================================================= */
+
+function renderLeaderboardList(list) {
+  const container = document.getElementById('leaderboard-list');
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div class="bg-white p-6 rounded-2xl text-center text-xs text-slate-400">
+        এই হাব-এ কোন ডাটা নিবন্ধিত নেই
+      </div>
+    `;
+
+    document.getElementById('dash-current-rank').innerText = '# -';
+    return;
+  }
+
+  let myRankIndex = -1;
+
+  container.innerHTML = list.map((item, index) => {
+    const rank = index + 1;
+    const isMe = item.agent_id === currentUser.id;
+
+    if (isMe) myRankIndex = index;
+
+    let rankBadgeClass = 'bg-slate-100 text-slate-700';
+    if (rank === 1) rankBadgeClass = 'bg-amber-400 text-slate-900 font-extrabold';
+    if (rank === 2) rankBadgeClass = 'bg-slate-300 text-slate-900 font-bold';
+    if (rank === 3) rankBadgeClass = 'bg-amber-700 text-white font-bold';
+
+    return `
+      <div class="bg-white p-3.5 rounded-2xl border ${
+        isMe ? 'border-2 border-red-500 shadow-md bg-red-50/20' : 'border-slate-200 shadow-sm'
+      } flex items-center gap-3">
+
+        <span class="w-7 h-7 rounded-full ${rankBadgeClass} flex items-center justify-center text-xs shrink-0">#${rank}</span>
+
+        <img src="${item.photo}" class="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0">
+
+        <div class="flex-1 min-w-0">
+          <h4 class="font-bold text-xs text-slate-800 truncate">
+            ${escapeHTML(item.name)} ${isMe ? '(আপনি)' : ''}
+          </h4>
+          <p class="text-[10px] text-slate-400 truncate">${escapeHTML(item.agent_type)}</p>
+          <div class="mt-1">
+            <span class="text-[10px] text-slate-500">
+              দৈনিক গড়: <b class="text-slate-700">${item.avg_daily_parcels.toFixed(1)}টি</b>
+            </span>
+          </div>
+        </div>
+
+        <div class="text-right shrink-0">
+          <span class="text-sm font-black text-slate-800">${item.total_parcels}টি</span>
+          <p class="text-[10px] text-slate-400">ডেলিভারি</p>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if (myRankIndex !== -1) {
+    const myRank = myRankIndex + 1;
+    const myParcels = list[myRankIndex].total_parcels;
+
+    document.getElementById('dash-current-rank').innerText = `#${myRank}`;
+    document.getElementById('my-rank-badge').innerText = `#${myRank}`;
+    document.getElementById('my-rank-parcels').innerText = `${myParcels}টি পার্সেল`;
+
+    if (myRankIndex > 0) {
+      const prevAgent = list[myRankIndex - 1];
+      const needed = (prevAgent.total_parcels - myParcels) + 1;
+
+      document.getElementById('my-rank-gap').innerText =
+        `পরের অবস্থানে যেতে (র‍্যাঙ্ক #${myRank - 1}) আরও ${needed}টি পার্সেল প্রয়োজন`;
+    } else {
+      document.getElementById('my-rank-gap').innerText =
+        '🎉 অভিনন্দন! আপনি শীর্ষ অবস্থানে রয়েছেন।';
+    }
+  } else {
+    document.getElementById('dash-current-rank').innerText = '# -';
+    document.getElementById('my-rank-gap').innerText = 'বর্তমান মাসে আপনার কোন সক্রিয় ডাটা নেই';
+  }
+}
+
+/* =========================================================
+   SWITCH VIEW
+========================================================= */
+
+function switchView(viewName) {
+  ['home','performance','leaderboard','profile'].forEach(v => {
+    const section = document.getElementById(`view-${v}`);
+    const navBtn = document.getElementById(`nav-${v}`);
+
+    if (v === viewName) {
+      section.classList.remove('hidden');
+      navBtn.classList.remove('text-slate-400');
+      navBtn.classList.add('text-red-600');
+    } else {
+      section.classList.add('hidden');
+      navBtn.classList.remove('text-red-600');
+      navBtn.classList.add('text-slate-400');
+    }
+  });
+
+  if (viewName === 'leaderboard') fetchAndRenderLeaderboard();
+  if (viewName === 'profile') renderArchiveList();
+}
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+
+  let bgClass = 'bg-slate-800 text-white';
+  if (type === 'success') bgClass = 'bg-emerald-600 text-white';
+  if (type === 'error') bgClass = 'bg-red-600 text-white';
+
+  toast.className =
+    `${bgClass} px-4 py-3 rounded-xl shadow-xl text-xs font-bold transition duration-300 pointer-events-auto flex items-center justify-between`;
+
+  toast.innerHTML = `<span>${escapeHTML(message)}</span>`;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+/* =========================================================
+   ADMIN MODAL
+========================================================= */
+
+function openAdminModal() {
+  document.getElementById('admin-modal').classList.remove('hidden');
+  document.getElementById('admin-login-view').classList.remove('hidden');
+  document.getElementById('admin-content-view').classList.add('hidden');
+  document.getElementById('admin-passcode').value = '';
+}
+
+function closeAdminModal() {
+  document.getElementById('admin-modal').classList.add('hidden');
+}
+
+function verifyAdminPasscode() {
+  const pass = document.getElementById('admin-passcode').value;
+
+  if (pass === getAdminPasscode()) {
+    document.getElementById('admin-login-view').classList.add('hidden');
+    document.getElementById('admin-content-view').classList.remove('hidden');
+    loadAdminAgentsList();
+  } else {
+    showToast('ভুল Admin password!', 'error');
+  }
+}
+
+/* =========================================================
+   ADMIN USER MANAGEMENT
+========================================================= */
+
+function getStatusMeta(status) {
+  const map = {
+    pending: { label: 'Pending', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
+    approved: { label: 'Approved', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    rejected: { label: 'Rejected', cls: 'bg-red-50 text-red-700 border-red-200' },
+    blocked: { label: 'Blocked', cls: 'bg-slate-100 text-slate-700 border-slate-300' }
+  };
+  return map[status] || map.approved;
+}
+
+function loadAdminAgentsList() {
+  const listContainer = document.getElementById('admin-agents-list');
+  const accounts = getAllAccounts();
+
+  const pendingCount = accounts.filter(a => (a.status || 'approved') === 'pending').length;
+  const approvedCount = accounts.filter(a => (a.status || 'approved') === 'approved').length;
+
+  document.getElementById('admin-user-count').innerText = accounts.length;
+  document.getElementById('admin-pending-count').innerText = pendingCount;
+  document.getElementById('admin-approved-count').innerText = approvedCount;
+
+  if (accounts.length === 0) {
+    listContainer.innerHTML = `
+      <p class="text-xs text-slate-400 text-center py-4">
+        কোন এজেন্ট অ্যাকাউন্ট নিবন্ধিত নেই
+      </p>
+    `;
+    return;
+  }
+
+  // Pending users first, then newest users.
+  const sortedAccounts = [...accounts].sort((a, b) => {
+    const ap = (a.status || 'approved') === 'pending' ? 0 : 1;
+    const bp = (b.status || 'approved') === 'pending' ? 0 : 1;
+    if (ap !== bp) return ap - bp;
+    return String(b.created_at || '').localeCompare(String(a.created_at || ''));
+  });
+
+  listContainer.innerHTML = sortedAccounts.map(a => {
+    const status = a.status || 'approved';
+    const meta = getStatusMeta(status);
+    const isPending = status === 'pending';
+
+    return `
+    <div class="bg-white p-3 rounded-xl border ${isPending ? 'border-amber-300 ring-1 ring-amber-100' : 'border-slate-200'}">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-2 min-w-0">
+          <img src="${escapeHTML(a.photo)}" class="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <p class="font-bold text-slate-800 truncate">${escapeHTML(a.name)}</p>
+              <span class="px-2 py-0.5 rounded-full border text-[9px] font-black ${meta.cls}">${meta.label}</span>
+            </div>
+            <p class="text-[10px] text-slate-500 truncate">${escapeHTML(a.mobile)}</p>
+            <p class="text-[10px] text-slate-500">${escapeHTML(a.hub)} | ${escapeHTML(a.agent_type)}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2 mt-3">
+        ${isPending ? `<button onclick="adminApproveUser('${a.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-2 rounded-lg text-[10px] font-bold"><i class="fa-solid fa-check mr-1"></i>Approve</button>` : `<button onclick="adminBlockUser('${a.id}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 px-2 py-2 rounded-lg text-[10px] font-bold"><i class="fa-solid fa-ban mr-1"></i>Block</button>`}
+        ${isPending ? `<button onclick="adminRejectUser('${a.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-2 py-2 rounded-lg text-[10px] font-bold"><i class="fa-solid fa-xmark mr-1"></i>Reject</button>` : `<button onclick="adminApproveUser('${a.id}')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-2 rounded-lg text-[10px] font-bold"><i class="fa-solid fa-check mr-1"></i>Approve</button>`}
+        <button onclick="adminRemoveUser('${a.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-2 py-2 rounded-lg text-[10px] font-bold"><i class="fa-solid fa-user-xmark mr-1"></i>Remove</button>
+      </div>
+    </div>
+    `;
+  }).join('');
+}
+
+function updateUserStatus(userId, newStatus) {
+  const accounts = getAllAccounts();
+  const index = accounts.findIndex(a => a.id === userId);
+
+  if (index === -1) {
+    showToast('User পাওয়া যায়নি', 'error');
+    return;
+  }
+
+  accounts[index].status = newStatus;
+  accounts[index].status_updated_at = new Date().toISOString();
+  saveAllAccounts(accounts);
+
+  loadAdminAgentsList();
+}
+
+function adminApproveUser(userId) {
+  const accounts = getAllAccounts();
+  const user = accounts.find(a => a.id === userId);
+  if (!user) return showToast('User পাওয়া যায়নি', 'error');
+
+  if (!confirm(`${user.name} (${user.mobile}) কে approve করতে চান?`)) return;
+  updateUserStatus(userId, 'approved');
+  showToast(`${user.name} approved হয়েছে। এখন login করতে পারবে।`, 'success');
+}
+
+function adminRejectUser(userId) {
+  const accounts = getAllAccounts();
+  const user = accounts.find(a => a.id === userId);
+  if (!user) return showToast('User পাওয়া যায়নি', 'error');
+
+  if (!confirm(`${user.name} (${user.mobile}) এর account reject করতে চান?`)) return;
+  updateUserStatus(userId, 'rejected');
+  showToast(`${user.name} reject করা হয়েছে।`, 'info');
+}
+
+function adminBlockUser(userId) {
+  const accounts = getAllAccounts();
+  const user = accounts.find(a => a.id === userId);
+  if (!user) return showToast('User পাওয়া যায়নি', 'error');
+
+  if (!confirm(`${user.name} (${user.mobile}) কে block করতে চান?`)) return;
+  updateUserStatus(userId, 'blocked');
+  showToast(`${user.name} blocked করা হয়েছে।`, 'info');
+}
+
+function adminRemoveUser(userId) {
+  const accounts = getAllAccounts();
+  const user = accounts.find(a => a.id === userId);
+
+  if (!user) {
+    showToast('User পাওয়া যায়নি', 'error');
+    return;
+  }
+
+  const confirmed = confirm(
+    `${user.name} (${user.mobile}) কে অ্যাপ থেকে remove করতে চান?\n\nতার account এবং সব daily records মুছে যাবে।`
+  );
+
+  if (!confirmed) return;
+
+  const updatedAccounts = accounts.filter(a => a.id !== userId);
+  saveAllAccounts(updatedAccounts);
+
+  let records = getLocalRecords();
+  records = records.filter(r => r.agent_id !== userId);
+  saveLocalRecords(records);
+
+  if (currentUser && currentUser.id === userId) {
+    localStorage.removeItem('osd_active_user_id');
+    currentUser = null;
+    closeAdminModal();
+    showAuthScreen();
+  }
+
+  runMonthlyArchive();
+  loadAdminAgentsList();
+  showToast(`${user.name} সফলভাবে remove করা হয়েছে`, 'success');
+}
+</script>
+
+</body>
+</html>
